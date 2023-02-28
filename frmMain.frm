@@ -99,6 +99,16 @@ Begin VB.Form frmMain
       Top             =   390
       Width           =   1500
    End
+   Begin VB.Menu menu 
+      Caption         =   "程序"
+      Visible         =   0   'False
+      Begin VB.Menu mnuQuit 
+         Caption         =   "退出(&E)"
+      End
+      Begin VB.Menu mnuAbout 
+         Caption         =   "关于(&A)"
+      End
+   End
 End
 Attribute VB_Name = "frmMain"
 Attribute VB_GlobalNameSpace = False
@@ -107,6 +117,55 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 Dim isDraw As Boolean
+Private Declare Function SetForegroundWindow Lib "user32" (ByVal hwnd As Long) As Long
+
+Private Sub Form_Load()
+    Call Icon_Add(Me.hwnd, Me.Caption, Me.Icon, 0) '将窗口图标加入通知栏
+End Sub
+
+Private Sub Form_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+    Dim lMsg As Single
+    lMsg = X / Screen.TwipsPerPixelX
+    Select Case lMsg
+    Case WM_RBUTTONUP
+        SetForegroundWindow (hwnd)
+        PopupMenu menu
+    Case WM_LBUTTONDOWN
+        Me.WindowState = 0
+        Me.Show
+'        Call Icon_Del(Form1.hwnd, 0) '显示出窗体时删除托盘
+    End Select
+End Sub
+
+Private Sub Form_Resize() '判断窗口是否最小化状态，并且是按最小化按纽后第一次发生Resize事件
+    If IsIconic(Me.hwnd) <> 0 Then
+        Me.Visible = False
+        Call Icon_Add(Me.hwnd, Me.Caption, Me.Icon, 0)
+    End If
+End Sub
+
+Private Sub Form_Unload(Cancel As Integer)
+    Call Icon_Del(Me.hwnd, 0)
+    End
+End Sub
+
+Private Sub mnuAbout_Click()
+    Dim strInfo$
+    strInfo = "鼠标随机移动防锁屏 V" & App.Major & "." & App.Minor & "." & App.Revision & vbCrLf & vbCrLf & _
+        "  作者:sysdzw" & vbCrLf & _
+        "  主页:https://blog.csdn.net/sysdzw" & vbCrLf & _
+        "  Q  Q:171977759" & vbCrLf & _
+        "  邮箱:sysdzw@163.com" & vbCrLf & vbCrLf & _
+        "2023-02-28"
+        
+'    Call Icon_Del(Form1.hwnd, 0)
+    MsgBox strInfo, vbInformation
+'    Call Icon_Add(Me.hwnd, Me.Caption, Me.Icon, 0)
+End Sub
+
+Private Sub mnuQuit_Click()
+    Unload Me
+End Sub
 
 Private Sub Command1_Click()
     Command1.Enabled = False
@@ -130,7 +189,7 @@ End Sub
 '随机画个圆
 Private Sub drawACircle()
     Dim w As New clsWindow
-    Dim x As Double, y As Double
+    Dim X As Double, Y As Double
     Dim sW&, sH&
     Dim k As Single
     Dim R As Double
@@ -141,13 +200,13 @@ Private Sub drawACircle()
     
     Randomize
     
-    x = (sW - 300) * Rnd + 300
-    y = (sH - 500) * Rnd + 500
+    X = (sW - 300) * Rnd + 300
+    Y = (sH - 500) * Rnd + 500
     R = sH * Rnd + sH / 4
     Me.Caption = R
 
     Do While k < 2 * pi
-        w.SetCursor Cos(k) * R / 4 + x, Sin(k) * R / 4 + y, , , 5
+        w.SetCursor Cos(k) * R / 4 + X, Sin(k) * R / 4 + Y, , , 5
         k = k + pi / 180
         DoEvents
     Loop
@@ -201,7 +260,3 @@ End Sub
 '        w.Wait 5000 '等待5秒钟
 '    Loop
 'End Sub
-
-Private Sub Form_Unload(Cancel As Integer)
-    End
-End Sub
